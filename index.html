@@ -13,15 +13,25 @@
         }
 
         /* Barra superior con los logos */
-        .header {
+         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 20px;
             background-color: white;
         }
+         /* Alinear logo CIREN a la izquierda */
+        .header-left img {
+            height: 60px;
+        }
 
-        .header img {
+        /* Alinear logos CORFO y DGA a la derecha */
+        .header-right {
+            display: flex;
+            gap: 10px; /* Espacio entre los logos */
+        }
+
+        .header-right img {
             height: 60px;
         }
 
