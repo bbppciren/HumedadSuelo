@@ -1,0 +1,45 @@
+// * Carpeta donde están almacenados los assets
+
+var folderPath = 'users/corfobbppciren2023/HS';
+var listAssets = ee.data.listAssets(folderPath).assets;
+
+exports.assetsList = function(){
+  return listAssets;
+};
+
+var currentYear = new Date().getFullYear();
+// Año inicial desde el cual se quiere empezar la lista
+var startYear = 2015;
+
+// Crear una lista de años desde el año inicial hasta el año actual
+var disp_year = [];
+for (var year = startYear; year <= currentYear; year++) {
+  disp_year.push(year.toString());
+}
+exports.dispYear = function(){
+  return disp_year;
+};
+
+
+// Evaluación de imágenes nuevas de evapotranspiración
+
+
+// Lista inicial de años
+var annos_evapo = ee.List(['2012', '2013', '2014', '2015', '2016', '2017', '2018',
+    '2019', '2020', '2021', '2022', '2023', '2024','2025']);
+
+exports.evapoUpdate = function(viirs_et_m_ic){
+  // Obtener la última imagen
+  var img = viirs_et_m_ic.sort('system:time_start', false).first();
+  // Extraer el año de la imagen y convertirlo a string
+  var year = ee.String(img.get('year'));
+  // Verificar si el año está en la lista (lado del servidor)
+  var estaEnLista = annos_evapo.contains(year);
+  ee.Algorithms.If(estaEnLista, annos_evapo, annos_evapo.add(year));
+  var nativeList = annos_evapo.getInfo();
+  return nativeList;
+};
+
+
+
+

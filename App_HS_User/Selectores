@@ -1,0 +1,199 @@
+// Clase para manejar métodos de fecha, dado que se selecciona un año
+
+var dummyImage = ee.Image().paint({
+  featureCollection: ee.FeatureCollection([]),
+  color: 'black',
+  width: 0 // Ancho de línea 0, por lo que no será visible
+});
+//Selectores.onChangeDownloadYear(c, links, selectedYear, s);
+// Función auxiliar para generar los IDs de los assets
+function generateAssetList(year) {
+    var basePath = 'users/corfobbppciren2023/HS/SM';
+  var suffix = 'Valparaiso_GCOM_';
+  return [
+    basePath + year + suffix + 'mes1',
+    basePath + year + suffix + 'mes2',
+    basePath + year + suffix + 'mes3',
+    basePath + year + suffix + 'mes4',
+    basePath + year + suffix + 'mes5',
+    basePath + year + suffix + 'mes6',
+    basePath + year + suffix + 'mes7',
+    basePath + year + suffix + 'mes8',
+    basePath + year + suffix + 'mes9',
+    basePath + year + suffix + 'mes10',
+    basePath + year + suffix + 'mes11',
+    basePath + year + suffix + 'mes12'
+  ];
+}
+
+// Función para verificar los assets por año
+function checkAssetsYear(year) {
+  var assetList = generateAssetList(year);
+  var lastAvailableAsset = null;
+
+  assetList.forEach(function(path) {
+    try {
+      var asset = ee.Image(path).getInfo();
+      if (asset) {
+        lastAvailableAsset = ee.Image(path); // Guarda el último asset disponible
+      }
+    } catch (e) {
+      // Manejo de error, en caso de que un asset no exista
+    }
+  });
+
+  if (lastAvailableAsset) {
+    var bandNames = lastAvailableAsset.bandNames();
+    var lastBandName = bandNames.get(bandNames.size().subtract(1));
+    return lastBandName.getInfo(); // Retorna el nombre de la última banda
+  } else {
+    return null; // No se encontró ninguna imagen válida
+  }
+}
+
+// Función para obtener el año actual
+function getYear() {
+  return ee.Date(new Date()).get('year').getInfo();
+}
+
+// Función para generar la lista de fechas para un año dado
+exports.getDateList = function(year, disp_year) {
+  var currentYear = getYear();
+  var dates = [];
+  var endDate;
+
+  if (year !== null) {
+    if (year === currentYear.toString()) {
+      var assetsCurrentYear = checkAssetsYear(currentYear);
+      var datePart = assetsCurrentYear.substring(1); // Elimina la 'b'
+      var cMonth = parseInt(datePart.substring(5, 7), 10) - 1; // Mes (0 basado)
+      var cDay = parseInt(datePart.substring(8, 10), 10); // Día
+      endDate = new Date(year, cMonth, cDay);
+    } else {
+      endDate = new Date(year, 11, 31);
+    }
+
+    var startDate = new Date(year, 0, 1);
+    for (var date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+      var day = ('0' + date.getDate()).slice(-2);
+      var month = ('0' + (date.getMonth() + 1)).slice(-2);
+      var formattedDate = day + '/' + month + '/' + date.getFullYear();
+      dates.push(formattedDate);
+    }
+  }
+
+  return dates;
+};
+
+// Si las bandas de los TIFF se llaman YYYY-MM-DD, esta función no es necesaria
+exports.getBand = function(date, dateList) {
+  return dateList.indexOf(date);
+};
+
+exports.onChangeDownloadYear = function(c, links, selectedYear, s) {
+  links.forEach(function(link, i) {
+    // Concatenación de strings para el nombre del archivo
+    var url = link.getDownloadURL({ 
+      //name: 'SM' + selectedYear + 'Valparaiso_' + i,
+      name: 'HS_anual.tif',
+      scale: 1000,
+      filePerBand: false,
+      format: 'GeoTIFF'
+    });
+    
+    // Asigna el URL y estilo a los labels correspondientes
+    c.downloadYear['label' + (i + 1)].setUrl(url);
+    c.downloadYear['label' + (i + 1)].style().set(s.ableLabel);
+  });
+  c.downloadYear.panel.style().set('shown', true);
+};
+
+// Función que se ejecuta al cambiar el año seleccionado
+exports.cleanScreen = function(c, selectedYear, s) {
+  // Deshabilitar labels y limpiar la interfaz
+  c.selectYear.downloadButon.setDisabled(false);
+    c.downloadYear.panel.style().set('shown', false);
+    
+    ['label1', 'label2', 'label3', 'label4', 'label5', 'label6',
+   'label7','label8','label9','label10','label11','label12'].forEach(function(label) {
+    c.downloadYear[label].style().set(s.disableLabel);
+  });
+  c.legend.panel.style().set({ shown: false });
+
+  c.downloadYear.title.setValue('Descarga año completo');
+  c.downloadYear.title.style().set(s.widgetTitle);
+  c.selectBand.selector.setValue(null, false);
+
+  if (c.selectBand.selector.getValue() === null) {
+    c.downloadBand.label.style().set(s.disableLabel);
+    c.downloadBand.label.setUrl('');
+  }
+
+  
+
+  // Eliminar tabla y gráficos si existen
+  if (c.infoTable) {
+    c.infoTable.style().set('shown', false);
+  }
+// dummy layer para no perder la posicion 0 en el arreglo de capas
+var layerDummy = ui.Map.Layer(dummyImage,{}, 'dummy');
+
+  // Eliminar capa del mapa si existe
+  var mapLayer = c.map.layers().get(0);
+  if (mapLayer && mapLayer.getName() === 'Humedad de Suelo') {
+    c.map.layers().set(0, layerDummy); // Reemplazar con la capa dummy para eliminarla
+  }
+
+  // Ocultar gráfico
+  c.chart.chartPanel.style().set('shown', false);
+};
+
+// Funciones auxiliares para la verificación de fechas
+function bisiesto(agno) {
+  return (agno % 4 === 0 && agno % 100 !== 0) || (agno % 400 === 0);
+}
+
+var meses30 = ['02', '04', '06', '09', '11'];
+
+// Verifica que la fecha sea válida
+exports.checkFecha = function(dateString) {
+  
+  var partesFecha = dateString.split('/');
+var dia = Number(partesFecha[0]);
+var mes = Number(partesFecha[1]);
+var agno = Number(partesFecha[2]);
+
+
+  try {
+    var fechaEspecifica = new Date(agno + '-' + mes + '-' + dia);
+
+    // Verificar que el día no exceda 31
+    if (isNaN(dia) || dia > 31) {
+      return 'Formato incorrecto de fecha';
+    }
+
+    // Verificar año bisiesto
+    if (mes === 2 && !bisiesto(agno) && dia > 28) {
+      return 'Verifique la fecha';
+    }
+
+    // Verificar meses con menos de 31 días
+    if (dia > 30 && meses30.includes(mes.toString().padStart(2, '0'))) {
+      return 'Verifique la fecha';
+    }
+
+    // Verificar rango de años
+    if (agno < 2015) {
+      return 'Datos disponibles a partir del año 2015';
+    }
+
+    if (agno > 2025) {
+      return 'Verifique la fecha';
+    }
+
+    return ''; // Fecha válida
+
+  } catch (error) {
+    return 'Formato incorrecto de fecha';
+  }
+};
