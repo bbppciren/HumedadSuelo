@@ -3,67 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Humedad de suelo</title>
+    <title>Humedad de suelo - Región de Valparaíso</title>
+    
     <style>
-        /* Estilo para el fondo degradado azul */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background: linear-gradient(to bottom, #0a64b4, #87CEEB);
+            min-height: 100vh;
+            padding: 10px;
         }
 
-        /* Estilo de los contenedores de contenido */
         .container {
-            padding: 20px;
             text-align: center;
             color: white;
+            max-width: 99%;
+            margin: 0 auto;
         }
 
         h1 {
             color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 2.3em;
         }
 
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 600px;
-            color: #000;
+        /* Primer iframe ocupa toda la pantalla */
+        .app-fullscreen {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Dashboard debajo */
+        .app-container {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .app-title {
+            color: #0a64b4;
+            margin: 0 0 10px 0;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .iframe-wrapper {
+            flex: 1;
+            border: 1px solid #0a64b4;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
         }
 
         iframe {
             width: 100%;
-            height: 80vh; /* 80% del alto de la ventana */
-            border: none; /* Sin bordes */
+            height: 100%;
+            border: none;
         }
 
-        /* Estilo para el footer */
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0a64b4;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* Footer */
         .footer {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            padding: 10px;
+            gap: 15px;
+            padding: 20px;
             background-color: white;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            border-radius: 12px;
         }
 
         .footer img {
-            height: 60px;
+            height: 65px;
+            object-fit: contain;
+        }
+
+        @media (max-width: 768px) {
+            .app-fullscreen {
+                height: 80vh;
+            }
         }
     </style>
 </head>
 <body>
 
-    <h1>Humedad de suelo - Región de Valparaíso</h1>
-    <iframe src="https://ee-corfobbppciren2023.projects.earthengine.app/view/humedad-de-suelo" allowfullscreen></iframe>
+    <div class="container">
+        <h1>Humedad de suelo - Región de Valparaíso</h1>
 
-    <!-- Footer con los logos -->
+        <!-- App Principal ocupa 100% de la ventana -->
+        <div class="app-fullscreen">
+            <div class="iframe-wrapper">
+                <div class="loader" id="loader1">Cargando mapa...</div>
+                <iframe 
+                    id="mapIframe"
+                    src="https://ee-corfobbppciren2023.projects.earthengine.app/view/humedad-de-suelo"
+                    onload="document.getElementById('loader1').style.display='none';"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Dashboard debajo -->
+        <div class="app-container">
+            <div class="app-title">📊 Dashboard</div>
+            <div class="iframe-wrapper" style="height:400px;">
+                <div class="loader" id="loader2">Cargando dashboard...</div>
+                <iframe 
+                    id="dashboardIframe"
+                    src="https://ee-corfobbppciren2023.projects.earthengine.app/view/dashboardhs"
+                    onload="document.getElementById('loader2').style.display='none';"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    </div>
+
     <div class="footer">
         <img src="logo_corfo2024_proyecto_apoyado_azul.jpg" alt="Logo CORFO">
         <img src="logo_DPS-Azul.png" alt="Logo DPS">
         <img src="DGA.jpg" alt="Logo DGA">
         <img src="logo_ciren.png" alt="Logo CIREN">
     </div>
+
+    <script>
+        console.log('✅ Aplicación cargada - Fullscreen mapa + dashboard debajo');
+
+        function reloadIframes() {
+            document.getElementById('mapIframe').src += '';
+            document.getElementById('dashboardIframe').src += '';
+        }
+    </script>
 
 </body>
 </html>
